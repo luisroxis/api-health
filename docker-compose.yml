@@ -1,0 +1,78 @@
+version: '3.8'
+services:
+  api:
+    # Build dockerfile
+    build: .
+    # Restart container in case of crashes etc
+    restart: always
+    container_name: API_Health
+    image: luisroxis/health-api:1.0.0
+    # Set API to use host networking
+    env_file:
+      - .docker/bkp/api/.env
+    networks:
+      - health
+    ports:
+      - 3333:3333
+    volumes:
+      - .docker/bkp/api:/tmp
+      - .docker/bkp/api:/public
+    # API depends on DB to be there
+    depends_on:
+      - postgres
+      - redis
+    # Set env variables
+    environment:
+      APP_KEY: VMEtLmZ0JXU1TjQ7TVBeXT7NXcLSMo0Q
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: health
+      PG_PASSWORD: Mfdcb5LZX&
+      PG_DB_NAME: health
+      REDIS_CONNECTION: local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+      REDIS_PREFIX: app
+      SMTP_HOST: localhost
+      SMTP_PORT: 587
+      SMTP_USERNAME: <username>
+      SMTP_PASSWORD: <password>
+      BULL_REDIS_HOST: redis
+      BULL_REDIS_PORT: 6379
+      BULL_REDIS_PASSWORD:
+      CACHE_VIEWS: false
+
+  postgres:
+    image: postgres:alpine
+    container_name: DB_Health
+    restart: always
+    tty: true
+    volumes:
+      - .docker/bkp/pg:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=Mfdcb5LZX&
+      - POSTGRES_USER=health
+      - POSTGRES_DB=health
+    ports:
+      - 5432:5432
+    networks:
+      - health
+
+  redis:
+    image: redis:alpine
+    command: bash -c "redis-server"
+    container_name: RD_Health
+    restart: always
+    volumes:
+      - .docker/bkp/redis:/data
+    ports:
+      - "6379:6379"
+    depends_on:
+      - postgres
+    networks:
+      - health
+
+networks:
+  health:
+    driver: bridge
